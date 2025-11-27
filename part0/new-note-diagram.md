@@ -4,13 +4,20 @@ sequenceDiagram
     participant server
 
     Note right of browser: The notes page contains a form element
+    Note left of server: a console.log shows the array of notes sent by the server [{  "content": "<4", "date": "2025-11-26T22:02:10.597Z" }, ... ]
+
+    browser->>server: POST https://studies.cs.helsinki.fi/exampleapp/new_note payload(note=hi)
+    activate server
+    server-->>browser: HTML document
+    deactivate server
+
+    Note right of browser: When the button on the form is clicked, the browser will send the form content/payload to the server
+    Note left of server: status 302 is a URL redirect, server asks the browser to make a new GET request
 
     browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/notes
     activate server
     server-->>browser: HTML document
     deactivate server
-
-    Note right of browser: When the button on the form is clicked, the browser will send the form content to the server
 
     browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/main.css
     activate server
@@ -19,7 +26,7 @@ sequenceDiagram
 
     browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/main.js
     activate server
-    server-->>browser: the JavaScript file
+    server-->>browser: the javascript file
     deactivate server
 
     Note right of browser: The browser starts executing the JavaScript code that fetches the JSON from the server
