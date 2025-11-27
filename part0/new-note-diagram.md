@@ -3,10 +3,14 @@ sequenceDiagram
     participant browser
     participant server
 
+    Note right of browser: The notes page contains a form element
+
     browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/notes
     activate server
     server-->>browser: HTML document
     deactivate server
+
+    Note right of browser: When the button on the form is clicked, the browser will send the form content to the server
 
     browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/main.css
     activate server
