@@ -13,3 +13,11 @@
   - N.1: title W
   - N.2: title Z
   - N.x: ...more titles
+
+## License
+
+[MIT License](LICENSE)
+
+---
+
+Made by Alythia
