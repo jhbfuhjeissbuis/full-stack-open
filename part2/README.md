@@ -1,8 +1,8 @@
 # Fullstack part 2
 
-Exercises from 1.1 to 1.14
+Exercises from 2.1 to 1.14
 
-- 1.1-1.5 -> course-information
+- 2.1-2.5 -> course-information
 
 - 1.6-1.11 -> phonebook
 
