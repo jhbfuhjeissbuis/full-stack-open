@@ -1,52 +1,90 @@
 import { useState } from "react";
 
 export default function App() {
-  const anecdotes = [
-    "If it hurts, do it more often.",
-    "Adding manpower to a late software project makes it later!",
-    "The first 90 percent of the code accounts for the first 90 percent of the development time...The remaining 10 percent of the code accounts for the other 90 percent of the development time.",
-    "Any fool can write code that a computer can understand. Good programmers write code that humans can understand.",
-    "Premature optimization is the root of all evil.",
-    "Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it.",
-    "Programming without an extremely heavy use of console.log is same as if a doctor would refuse to use x-rays or blood tests when diagnosing patients.",
-    "The only way to go fast, is to go well.",
-  ];
-  const [selected, setSelected] = useState(0);
+  const [persons, setPersons] = useState([
+    { name: "Arto Hellas", number: "3432564357" },
+    { name: "Ada Lovelace", number: "39-44-5323523", id: 2 },
+    { name: "Dan Abramov", number: "12-43-234345", id: 3 },
+    { name: "Mary Poppendieck", number: "39-23-6423122", id: 4 },
+  ]);
+  const [newPerson, setNewPerson] = useState({
+    name: "",
+    number: "",
+  });
+  const [filter, setFilter] = useState("");
 
-  const [data, setData] = useState(
-    anecdotes.map((text) => ({ text, votes: 0 }))
-  );
-
-  function getRandomInt() {
-    setSelected(Math.floor(Math.random() * anecdotes.length));
+  function handleSubmit(event) {
+    event.preventDefault();
+    !persons.some((person) => person.name === newPerson.name)
+      ? (setPersons([
+          ...persons,
+          { name: newPerson.name, number: newPerson.number },
+        ]),
+        setNewPerson({ name: "", number: "" }))
+      : alert(`${newPerson.name} is already added to phonebook`);
   }
-
-  function addVote() {
-    const newData = [...data];
-    newData[selected].votes += 1;
-    setData(newData);
-  }
-
-  const maxVotesIndex = data.reduce(
-    (maxIndex, current, index, arr) =>
-      current.votes > arr[maxIndex].votes ? index : maxIndex,
-    0
-  );
-
-  const selectedAnecdote = data[selected];
-  const mostVotesAnecdote = data[maxVotesIndex];
 
   return (
-    <>
-      <h1>Anecdote of the day</h1>
-      <div>{selectedAnecdote.text}</div>
-      <div>{`has ${selectedAnecdote.votes} votes`}</div>
-      <button onClick={() => addVote()}>vote</button>
-      <button onClick={() => getRandomInt()}>next anecdote</button>
-
-      <h1>Anecdote with most votes</h1>
-      <div>{mostVotesAnecdote.text}</div>
-      <div>{`has ${mostVotesAnecdote.votes} votes`}</div>
-    </>
+    <div>
+      <h2>{`Phonebook`}</h2>filter shown with
+      <Filter filter={filter} setFilter={setFilter} />
+      <h3>{`add a new`}</h3>
+      <PersonForm
+        newPerson={newPerson}
+        setNewPerson={setNewPerson}
+        handleSubmit={handleSubmit}
+      />
+      <h3>{`Numbers`}</h3>
+      <Persons persons={persons} filter={filter} />
+    </div>
   );
+}
+
+function Filter({ filter, setFilter }) {
+  return (
+    <input
+      value={filter}
+      onChange={(event) => setFilter(event.target.value)}
+      placeholder="input name..."
+    />
+  );
+}
+
+function PersonForm({ newPerson, setNewPerson, handleSubmit }) {
+  return (
+    <form onSubmit={handleSubmit}>
+      <div>
+        {`name:`}{" "}
+        <input
+          value={newPerson.name}
+          onChange={(event) =>
+            setNewPerson({ ...newPerson, name: event.target.value })
+          }
+        />
+      </div>
+      <div>
+        {`number:`}{" "}
+        <input
+          value={newPerson.number}
+          onChange={(event) =>
+            setNewPerson({ ...newPerson, number: event.target.value })
+          }
+        />
+      </div>
+      <div>
+        <button type="submit">{`add`}</button>
+      </div>
+    </form>
+  );
+}
+
+function Persons({ persons, filter }) {
+  return persons.map((person) => {
+    if (person.name.toLowerCase().includes(filter.toLowerCase()))
+      return (
+        <p key={person.name}>
+          {person.name} {person.number}
+        </p>
+      );
+  });
 }
