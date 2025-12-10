@@ -1,3 +1,3 @@
-# Fullstack part 1
+# Fullstack part 2
 
-Exercises from 1.12 to 1.14
+Exercises from 2.6 to 2.17
