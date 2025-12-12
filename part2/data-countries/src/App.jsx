@@ -1,81 +1,174 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import service from "./services/countries";
 
 export default function App() {
-  const [feedback, setFeedback] = useState({
-    good: 0,
-    neutral: 0,
-    bad: 0,
-  });
-
-  function handleFeedback(type) {
-    setFeedback((prev) => ({
-      ...prev,
-      [type]: prev[type] + 1,
-    }));
-  }
-
-  return (
-    <>
-      <div>
-        <h1>give feedback</h1>
-        <Button text="good" value="good" onClick={handleFeedback}></Button>
-        <Button
-          text="neutral"
-          value="neutral"
-          onClick={handleFeedback}
-        ></Button>
-        <Button text="bad" value="bad" onClick={handleFeedback}></Button>
-      </div>
-      <Statistics feedback={feedback} />
-    </>
-  );
-}
-
-function Statistics({ feedback }) {
-  const { good, neutral, bad } = feedback;
-  const total = bad + neutral + good;
-  const avg = total > 0 ? (bad * -1 + neutral * 0 + good * 1) / total : 0;
-  const positive = total > 0 ? (good / total) * 100 : 0;
+  const [countries, setCountries] = useState([]);
+  const [filter, setFilter] = useState("");
+  const [detailedCountry, setDetailedCountry] = useState(null);
+  useEffect(() => {
+    service.getAll().then((initialCountries) => {
+      setCountries(initialCountries);
+    });
+  }, []);
 
   return (
     <div>
-      <h1>statistics</h1>
-      {total > 0 ? (
-        <table>
-          <StatisticLine text="good" value={good} />
-          <StatisticLine text="neutral" value={neutral} />
-          <StatisticLine text="bad" value={bad} />
-          <StatisticLine text="total" value={total} />
-          <StatisticLine text="average" value={avg.toPrecision(4)} />
-          <StatisticLine
-            text="positive"
-            value={positive.toPrecision(4) + " %"}
-          />
-        </table>
+      <h2>{`Countries`}</h2>
+      <p>
+        find countries{" "}
+        <Filter
+          filter={filter}
+          setFilter={setFilter}
+          setDetailedCountry={setDetailedCountry}
+          detailedCountry={detailedCountry}
+          countries={countries}
+        />
+      </p>
+      <Countries
+        countries={countries}
+        filter={filter}
+        detailedCountry={detailedCountry}
+        setDetailedCountry={setDetailedCountry}
+      />
+    </div>
+  );
+}
+
+function Filter({
+  filter,
+  setFilter,
+  setDetailedCountry,
+  detailedCountry,
+  countries,
+}) {
+  return (
+    <input
+      value={filter}
+      onChange={(e) => {
+        const newFilter = e.target.value;
+        setFilter(newFilter);
+
+        if (detailedCountry) {
+          const stillInList = countries.some(
+            (country) =>
+              country.name.common
+                .toLowerCase()
+                .includes(newFilter.toLowerCase()) &&
+              country.name.common === detailedCountry.name.common
+          );
+          if (!stillInList) {
+            setDetailedCountry(null);
+          }
+        }
+      }}
+    />
+  );
+}
+
+function Countries({ countries, filter, detailedCountry, setDetailedCountry }) {
+  const [requestedCountry, setRequestedCountry] = useState(null);
+
+  const filteredCountries = countries.filter((country) =>
+    country.name.common.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  if (filter.trim() === "") return <div>Type to search for countries</div>;
+
+  if (filteredCountries.length === 0) return <div>No matches found</div>;
+  if (filteredCountries.length > 10)
+    return <div>Too many matches, specify another filter</div>;
+  if (filteredCountries.length === 1) {
+    const countryName = filteredCountries[0].name.common;
+
+    if (requestedCountry !== countryName) {
+      setRequestedCountry(countryName);
+      service.getByName(countryName).then((data) => {
+        setDetailedCountry(data);
+      });
+    }
+
+    if (detailedCountry) {
+      return <CountryDetails country={detailedCountry} />;
+    }
+    return <div>Loading country details...</div>;
+  }
+
+  return (
+    <div>
+      <div>
+        {filteredCountries.map((country) => (
+          <div key={country.cca3 || country.name.common}>
+            {country.name.common}
+            <button
+              onClick={() => {
+                setRequestedCountry(country.name.common);
+                service.getByName(country.name.common).then((data) => {
+                  setDetailedCountry(data);
+                });
+              }}
+            >
+              show
+            </button>
+          </div>
+        ))}
+      </div>{" "}
+      {detailedCountry ? (
+        <CountryDetails country={detailedCountry} />
       ) : (
-        <p>No feedback given</p>
+        <div>Loading country details...</div>
       )}
     </div>
   );
 }
-function StatisticLine({ text, value, format = "default" }) {
-  return (
-    <tbody>
-      {format == "percent" ? (
-        <tr>
-          <td>{`${text} : `}</td>
-          <td>{`${value}  %`}</td>
-        </tr>
-      ) : (
-        <tr>
-          <td>{`${text} : `}</td>
-          <td>{`${value}`}</td>
-        </tr>
-      )}
-    </tbody>
-  );
-}
 
-function Button({ text, value, onClick }) {
-  return <button onClick={() => onClick(value)}>{text}</button>;
+function CountryDetails({ country }) {
+  const [weather, setWeather] = useState(null);
+
+  useEffect(() => {
+    if (country.capital && country.capital[0]) {
+      service.getWeather(country.capital[0]).then((weatherData) => {
+        setWeather(weatherData);
+      });
+    }
+  }, [country.capital]);
+
+  return (
+    <div>
+      <h2>{country.name.common}</h2>
+      <p>Capital: {country.capital && country.capital.join(", ")}</p>
+      <p>Area: {country.area} km^2</p>
+      <h3>Languages:</h3>
+      <ul>
+        {country.languages &&
+          Object.values(country.languages).map((language) => (
+            <li key={language}>{language}</li>
+          ))}
+      </ul>
+      <img
+        src={country.flags && country.flags.png}
+        alt={`Flag of ${country.name.common}`}
+        width="200"
+      />
+      {country.capital && country.capital[0] && (
+        <>
+          <h3>Weather in {country.capital[0]}</h3>
+          {weather ? (
+            <div>
+              <p>
+                Temperature: {(weather.main.temp - 273.15).toFixed(2)} Celsius
+              </p>
+
+              <img
+                src={`https://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png`}
+                alt={weather.weather[0].description}
+              />
+              <p>Wind: {weather.wind.speed} m/s</p>
+            </div>
+          ) : (
+            <p>Loading weather...</p>
+          )}
+        </>
+      )}
+    </div>
+  );
 }
